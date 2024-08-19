@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: sh -c "python manage.py migrate && gunicorn redpillinvest.wsgi:application --bind 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgres://user:password@db:5432/redpillinvest_db
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: redpillinvest.settings.production
+    env_file:
+      - .env
+    
+  db:
+    image: postgres:16
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=redpillinvest_db
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+  
+  redis:
+    image: redis:6
+  
+  celery:
+    build: .
+    command: celery -A redpillinvest worker --l info
+    volumes:
+      - .:/app
+    depends_on:
+      - web
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgres://user:password@db:5432/redpillinvest_db
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_SETTINGS_MODULE: redpillinvest.settings
+    env_file:
+      - .env
+  
+volumes:
+  postgres_data:
