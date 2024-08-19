@@ -1,13 +1,16 @@
-if [ "$DATABASE" = "postgres" ]
-then
-    echo "Waiting for postgres..."
+#!/bin/sh
 
-    while ! nc -z $SQL_HOST $SQL_PORT; do
-      sleep 0.1
-    done
+set -e
 
-    echo "PostgreSQL started"
-fi
+host="$DATABASE_URL"
+port="5432"
+
+until nc -z "$host" "$port"; do
+  echo "Waiting for postgres..."
+  sleep 1
+done
+
+echo "PostgreSQL started"
 
 python manage.py migrate
 
