@@ -1,1 +1,5 @@
 .env
+# no pycache in any directory
+__pycache__/
+# no pycache
+*.pyc
